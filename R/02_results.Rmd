@@ -1,0 +1,223 @@
+---
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+options(knitr.kable.NA = '')
+```
+
+<hr>
+
+```{r load results, message=FALSE, results='hide'}
+source("/Users/cjcampbell/Pd_DetectionMigratoryBats/R/00_Setup.R")
+source("/Users/cjcampbell/Pd_DetectionMigratoryBats/R/01_load_qPCR_results.R")
+```
+
+##### Data from Table 1: Individuals of each species sampled by state and range of years and month of year sampled.
+
+```{r table1, warning=FALSE}
+sum_tab <- mdf %>% 
+  dplyr::filter(!is.na(Well), !is.na(Spp)) %>% 
+  dplyr::group_by(Spp, Source_St) %>% 
+  dplyr::mutate(
+    Year = as.numeric(Year),
+    Month = as.numeric(Month),
+    ) %>% 
+  dplyr::summarise(
+    n_indiv = length(unique(AL.CODE)) ,
+    min_yr = abs( min( Year,  na.rm = TRUE) ),
+    max_yr = abs( max( Year,  na.rm = TRUE) ),
+    min_mo = abs( min( Month, na.rm = TRUE) ),
+    max_mo = abs( max( Month, na.rm = TRUE) )
+  ) %>% 
+  dplyr::mutate(
+    range_year  = if_else(min_yr == max_yr, paste(min_yr), paste(min_yr, " - ", max_yr) ),
+    range_month = if_else(min_mo == max_mo, paste(min_mo), paste(min_mo, " - ", max_mo) )
+    ) %>% 
+  ungroup() %>% 
+  dplyr::select(Spp, Source_St, range_year, range_month, n_indiv) %>% 
+  arrange(Spp, Source_St, desc(n_indiv))
+
+sum_tab %>% kable()
+```
+<hr>
+
+##### Data included in Table 2: Number of individuals sampled by each sampling method. Note that individuals sampled by multiple methods (e.g., “tissue and skin swab”) correspond with multiple samples.
+
+```{r table2}
+
+mdf %>% 
+  dplyr::filter(!is.na(Well), !is.na(Spp)) %>% 
+  dplyr::group_by(AL.CODE, Spp, sampleType, `Sampling Method`) %>% 
+  dplyr::summarise(n = n()) %>% 
+  ungroup() %>% 
+  dplyr::select(-n) %>% 
+  dplyr::mutate(
+    samplingMethod = case_when(
+      grepl("Turbine", `Sampling Method`, ignore.case = T) ~ "carcass",
+      grepl("live", `Sampling Method`, ignore.case = T)    ~ "live",
+      grepl("netting", `Sampling Method`, ignore.case = T)    ~ "live",
+      TRUE ~ "Unknown"
+    )
+  ) %>% 
+  dplyr::group_by(AL.CODE, Spp, sampleType, samplingMethod) %>% 
+  dplyr::summarise(n = n()) %>% 
+  pivot_wider(names_from = sampleType, values_from = n) %>% 
+  dplyr::mutate(
+    sampled = case_when(
+      extractedDNA==1&swab_skin==1&swab_fur==1 ~ "All",
+      extractedDNA==1&is.na(swab_skin)&swab_fur==1 ~ "Tissue and fur swab",
+      extractedDNA==1&swab_skin==1&is.na(swab_fur) ~ "Tissue and skin swab",
+      extractedDNA==1&is.na(swab_skin)&is.na(swab_fur) ~ "Tissue only",
+      is.na(extractedDNA)&swab_skin==1&swab_fur==1 ~ "Skin and fur swabs",
+      is.na(extractedDNA)&swab_skin==1&is.na(swab_fur) ~ "Skin swab only",
+      is.na(extractedDNA)&is.na(swab_skin)&swab_fur==1 ~ "Fur swab only",
+  )) %>% 
+  dplyr::group_by(Spp, samplingMethod, sampled) %>% 
+  dplyr::summarise(n = n()) %>% 
+  ungroup() %>% 
+  pivot_wider(values_from = n, names_from = sampled) %>% 
+  kable()
+```
+
+<hr>
+
+##### Data from table 3: Table 3: Sampling details for Pd-positive individuals. One individual represented here was discarded due to irregular curve results (i.e., Cт very low).
+
+```{r table3 }
+
+has_pos_ID <- mdf %>% 
+  filter(Cт != "Undetermined") %>% 
+  dplyr::select(AL.CODE) %>% 
+  na.omit() %>% 
+  distinct %>% 
+  unlist()
+
+pos_results_table <- mdf %>% 
+  filter(AL.CODE %in% has_pos_ID) %>% 
+  dplyr::mutate(Cт = round(as.numeric(Cт), digits = 2)) %>% 
+  arrange(Spp, AL.CODE, desc(Cт), sampleType) %>% 
+  group_by(Spp, Source_St, Year, Month, Day, AL.CODE, sampleType) %>% 
+  summarise(Ct_vector=paste(Cт, collapse=", ")) %>% 
+  dplyr::select(Spp, Source_St, Year, Month, Day, sampleType, Ct_vector)
+
+pos_results_table %>% 
+  as.data.frame %>% 
+  dplyr::select(-AL.CODE) %>% 
+  dplyr::rename(
+    "Species" = Spp, 
+    "State" = Source_St, 
+    "Sample type" = sampleType,
+    "Cт results" = Ct_vector
+    ) %>% 
+  dplyr::mutate(
+    Species = recode(
+      Species, 
+      "LACI" = "Lasiurus cinereus", 
+      "LABO" = "Lasiurus borealis", 
+      "LANO" = "Lasionycteris noctivagans"
+      ),
+    `Sample type` = recode(
+      `Sample type`,
+      extractedDNA = "Extracted DNA",
+      swab_fur = "Fur swab",
+      swab_skin = "Skin swab"
+      )
+    ) %>% 
+  knitr::kable(align = c(rep("l", 2), rep("r", 3), "l", "r"), padding = 2) %>% 
+    column_spec(1, width = "2in") %>% 
+    column_spec(2, width = "0.4in") %>% 
+    column_spec(3, width = "0.4in") %>% 
+    column_spec(4, width = "0.4in") %>% 
+    column_spec(5, width = "0.75in") %>% 
+    column_spec(6, width = "1.25in") %>% 
+    column_spec(7, width = "2in")
+```
+
+<hr>
+
+```{r SI_fig_qPCR results}
+if(!exists("results_files")) stop("object results_files is missing! Make sure you load the data.")
+suppressWarnings({ suppressMessages({
+  qPCR_out <- lapply(results_files, function(file){
+    
+    data_main <- readxl::read_excel(file, range = "A8:AB104", sheet = 2)
+    
+    data_header <- readxl::read_excel(file, range = "A1:B6", col_names = FALSE, sheet = 2) %>% 
+      t() %>% as.data.frame(stringsAsFactors = FALSE)
+    colnames(data_header) <- data_header[1,]
+    data_header <- data_header[-1,]
+    
+    data_footer <- readxl::read_excel(file, range = "A106:B109", col_names = FALSE, sheet = 2) %>% 
+      t() %>% as.data.frame(stringsAsFactors = FALSE)
+    colnames(data_footer) <- data_footer[1,]
+    data_footer <- data_footer[-1,]
+    
+    maindat <- purrr::reduce(list(data_main, data_header, data_footer), cbind)
+   
+    raw_data_main <- readxl::read_excel(file, range = "A8:E3848", sheet = 5)
+    
+    raw_data_header <- readxl::read_excel(file, range = "A1:B6", col_names = FALSE, sheet = 5) %>% 
+      t() %>% as.data.frame(stringsAsFactors = FALSE)
+    colnames(raw_data_header) <- raw_data_header[1,]
+    raw_data_header <- raw_data_header[-1,]
+  
+    rawdat <- purrr::reduce(list(raw_data_main, raw_data_header), cbind)
+  
+    return( left_join(rawdat, maindat) )
+  }) %>% 
+    plyr::ldply() %>% 
+    mutate(
+      sample_type = if_else( grepl( "dilution", `Sample Name`), "dilution",
+                             if_else( grepl("Pd_PC",  `Sample Name`), "control_pos",
+                                      if_else( grepl("NC",  `Sample Name`), "control_neg",
+                                               "sample"
+                                      )))
+      
+    ) %>% 
+    dplyr::mutate( plateName = 
+                     tools::file_path_sans_ext( 
+                       gsub( "D:Applied BiosystemsStepOne Software v2.2.2experimentsPdCaitlin_Pd_", "", 
+                             gsub("\\\\", "", `Experiment File Name`) ) ) )
+})})
+
+p <- qPCR_out %>% 
+  filter(sample_type != "dilution") %>% 
+  ggplot() +
+  geom_line(
+    aes(
+      x = Cycle, y = ΔRn, 
+      group = interaction(Well, `Sample Name`, plateName),
+      color = sample_type 
+    ),
+    size = 0.4
+  ) +
+  geom_hline(
+    aes(yintercept = `Ct Threshold`, group = interaction(Well, `Sample Name`, plateName)),
+    linetype = 2
+    ) +
+  facet_wrap(~plateName, scales= "free", ncol = 3) +
+  scale_y_log10(limits = c(1e-4, 1e1)) +
+  ggplot2::scale_colour_viridis_d(
+    direction = -1 ,
+    name = "Sample type",
+    labels = c("Neg. control", "Pos. control", "Samples")
+    ) +
+  theme_bw() +
+  theme(
+    axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    strip.background = element_blank(),
+    legend.position = c(0.85, 0.05)
+  )
+p
+```
+
+
+##### SI Figure 1: Response curves from qPCR analyses. Each panel represents a distinct plate run, with the date and sequence of each run identified in the panel title. Dotted lines indicate run-specific thresholds. Control positives (teal) and negatives (yellow) all performed as expected.

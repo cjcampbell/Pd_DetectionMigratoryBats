@@ -1,4 +1,6 @@
 
+library(knitr)
+library(kableExtra)
 library(tidyverse)
 library(readr)
 library(readxl)
