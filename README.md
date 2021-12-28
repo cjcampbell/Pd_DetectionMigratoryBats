@@ -1,1 +1,1 @@
-Data and analysis from from the manuscript 'White-nose syndrome pathogen <i>Pseudogymnoascus destructans</i> detected on migratory bats during summer and autumn, including hoary bat (<i>Lasiurus cinereus</i>)'
+Data and analysis from from the manuscript 'White-nose syndrome pathogen detected on migratory tree-roosting bats'.
