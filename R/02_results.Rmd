@@ -266,4 +266,4 @@ p
 ```
 
 
-##### SI Figure 1: Response curves from qPCR analyses. Each panel represents a distinct plate run, with the date and sequence of each run identified in the panel title. Dotted lines indicate run-specific thresholds. Control positives (teal) and negatives (yellow) all performed as expected.
+##### SI Figure 1: Response curves from qPCR analyses. Each panel represents a distinct plate run, with the date and sequence of each run identified in the panel title. Dotted lines indicate run-specific thresholds. Control positives (teal) and negatives (yellow) all performed as expected. The spurious positive result (discarded) is visible in the last plate, 190823_c.
