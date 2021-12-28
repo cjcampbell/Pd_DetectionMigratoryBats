@@ -131,7 +131,7 @@ mdf2 %>%
 
 <hr>
 
-##### Data from table 3: Table 3: Sampling details for Pd-positive individuals. One individual represented here was discarded due to irregular curve results (i.e., Cт very low).
+##### Data from table 3: Sampling details for Pd-positive individuals. One individual represented here was discarded due to irregular curve results (i.e., Cт very low).
 
 ```{r table3 }
 
