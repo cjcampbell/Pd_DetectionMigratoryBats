@@ -2,6 +2,7 @@
 output:
   html_document:
     df_print: paged
+    theme: null
 ---
 
 ```{r setup, include=FALSE}
