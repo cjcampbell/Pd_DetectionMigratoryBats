@@ -16,6 +16,51 @@ source("/Users/cjcampbell/Pd_DetectionMigratoryBats/R/00_Setup.R")
 source("/Users/cjcampbell/Pd_DetectionMigratoryBats/R/01_load_qPCR_results.R")
 ```
 
+```{r summarText}
+howManySamples <- mdf %>% 
+  filter(!is.na(AL.CODE)) %>% 
+  dplyr::group_by(AL.CODE, sampleType) %>% 
+  dplyr::summarise(n = n())
+howManySamples_Spp <- mdf %>% 
+    filter(!is.na(AL.CODE)) %>% 
+    dplyr::group_by(Spp, sampleType) %>% 
+    dplyr::summarise(n = length(unique(AL.CODE)))
+
+howManyIndivs <- mdf %>% 
+  filter(!is.na(AL.CODE)) %>% 
+  dplyr::group_by(AL.CODE) %>% 
+  dplyr::summarise(n = n())
+howManyIndivs_Spp <- mdf %>% 
+  filter(!is.na(AL.CODE)) %>% 
+  dplyr::group_by(Spp) %>% 
+  dplyr::summarise(n = length(unique(AL.CODE)))
+
+```
+
+We conducted qPCR on a total of `r nrow(howManySamples)` samples representing `r nrow(howManyIndivs)` individuals (`r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LACI", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LACI","n"])` individual hoary bats, `r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LABO", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LABO","n"])` individual eastern red bats, and `r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LANO", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LANO","n"])` individual silver-haired bats; Table 2).
+
+
+
+## Sampling methods
+```{r samplingMethods}
+mdf %>% 
+  dplyr::filter(!is.na(AL.CODE)) %>% 
+  dplyr::select(AL.CODE, Spp, Source_St, Source_County) %>% 
+  dplyr::distinct() %>% 
+  dplyr::group_by(Source_St, Source_County) %>% 
+  dplyr::summarise(n=n())
+  
+  
+  dplyr::select(AL.CODE) %>% 
+  distinct() %>% 
+  left_join(., metadata, by = "AL.CODE") %>% 
+  dplyr::group_by()
+
+```
+
+
+<hr>
+
 ##### Data from Table 1: Individuals of each species sampled by state and range of years and month of year sampled.
 
 ```{r table1, warning=FALSE}
@@ -49,7 +94,8 @@ sum_tab %>% kable()
 
 ```{r table2}
 
-mdf %>% 
+mdf2 <- 
+  mdf %>% 
   dplyr::filter(!is.na(Well), !is.na(Spp)) %>% 
   dplyr::group_by(AL.CODE, Spp, sampleType, `Sampling Method`) %>% 
   dplyr::summarise(n = n()) %>% 
@@ -58,6 +104,7 @@ mdf %>%
   dplyr::mutate(
     samplingMethod = case_when(
       grepl("Turbine", `Sampling Method`, ignore.case = T) ~ "carcass",
+      grepl("carcass", `Sampling Method`, ignore.case = T) ~ "carcass",
       grepl("live", `Sampling Method`, ignore.case = T)    ~ "live",
       grepl("netting", `Sampling Method`, ignore.case = T)    ~ "live",
       TRUE ~ "Unknown"
@@ -75,7 +122,9 @@ mdf %>%
       is.na(extractedDNA)&swab_skin==1&swab_fur==1 ~ "Skin and fur swabs",
       is.na(extractedDNA)&swab_skin==1&is.na(swab_fur) ~ "Skin swab only",
       is.na(extractedDNA)&is.na(swab_skin)&swab_fur==1 ~ "Fur swab only",
-  )) %>% 
+  )) 
+
+mdf2 %>% 
   dplyr::group_by(Spp, samplingMethod, sampled) %>% 
   dplyr::summarise(n = n()) %>% 
   ungroup() %>% 
