@@ -42,19 +42,15 @@ We conducted qPCR on a total of `r nrow(howManySamples)` samples representing `r
 
 
 ## Sampling methods
+
+Location information
 ```{r samplingMethods}
 mdf %>% 
   dplyr::filter(!is.na(AL.CODE)) %>% 
   dplyr::select(AL.CODE, Spp, Source_St, Source_County) %>% 
   dplyr::distinct() %>% 
-  dplyr::group_by(Source_St, Source_County) %>% 
-  dplyr::summarise(n=n())
-  
-  
-  dplyr::select(AL.CODE) %>% 
-  distinct() %>% 
-  left_join(., metadata, by = "AL.CODE") %>% 
-  dplyr::group_by()
+  dplyr::group_by(Spp, Source_St, Source_County) %>% 
+  dplyr::summarise(n=length(unique(AL.CODE)))
 
 ```
 
