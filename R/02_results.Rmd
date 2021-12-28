@@ -10,8 +10,6 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 options(knitr.kable.NA = '')
 ```
 
-<hr>
-
 ```{r load results, message=FALSE, results='hide'}
 source("/Users/cjcampbell/Pd_DetectionMigratoryBats/R/00_Setup.R")
 source("/Users/cjcampbell/Pd_DetectionMigratoryBats/R/01_load_qPCR_results.R")
@@ -38,10 +36,6 @@ howManyIndivs_Spp <- mdf %>%
 
 ```
 
-We conducted qPCR on a total of `r nrow(howManySamples)` samples representing `r nrow(howManyIndivs)` individuals (`r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LACI", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LACI","n"])` individual hoary bats, `r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LABO", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LABO","n"])` individual eastern red bats, and `r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LANO", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LANO","n"])` individual silver-haired bats; Table 2).
-
-
-
 ## Sampling methods
 
 Location information
@@ -51,12 +45,13 @@ mdf %>%
   dplyr::select(AL.CODE, Spp, Source_St, Source_County) %>% 
   dplyr::distinct() %>% 
   dplyr::group_by(Spp, Source_St, Source_County) %>% 
-  dplyr::summarise(n=length(unique(AL.CODE)))
+  dplyr::summarise(n=length(unique(AL.CODE))) %>% 
+  kable
 
 ```
 
 
-<hr>
+<br><hr><br>
 
 ##### Data from Table 1: Individuals of each species sampled by state and range of years and month of year sampled.
 
@@ -85,7 +80,9 @@ sum_tab <- mdf %>%
 
 sum_tab %>% kable()
 ```
-<hr>
+<br><hr><br>
+
+We conducted qPCR on a total of `r nrow(howManySamples)` samples representing `r nrow(howManyIndivs)` individuals (`r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LACI", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LACI","n"])` individual hoary bats, `r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LABO", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LABO","n"])` individual eastern red bats, and `r sum(howManySamples_Spp[howManySamples_Spp$Spp == "LANO", "n"])` samples from `r as.numeric(howManyIndivs_Spp[howManyIndivs_Spp$Spp == "LANO","n"])` individual silver-haired bats; Table 2).
 
 ##### Data included in Table 2: Number of individuals sampled by each sampling method. Note that individuals sampled by multiple methods (e.g., “tissue and skin swab”) correspond with multiple samples.
 
@@ -129,7 +126,7 @@ mdf2 %>%
   kable()
 ```
 
-<hr>
+<br><hr><br>
 
 ##### Data from table 3: Sampling details for Pd-positive individuals. One individual represented here was discarded due to irregular curve results (i.e., Cт very low).
 
@@ -183,7 +180,7 @@ pos_results_table %>%
     column_spec(7, width = "2in")
 ```
 
-<hr>
+<br><hr><br>
 
 ```{r SI_fig_qPCR results}
 if(!exists("results_files")) stop("object results_files is missing! Make sure you load the data.")
